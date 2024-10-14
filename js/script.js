@@ -234,4 +234,54 @@ window.addEventListener("DOMContentLoaded", ()=>{
         postText, 
         30).renderCard();
 
+    // отправляем данные из формы обратной связи на сервер 
+    const forms = document.querySelectorAll("form");
+    const message = {
+        loading: "Загрузка",
+        success: "Спасибо! Скоро мы с вами свяжемся",
+        failure: "Что-то пошло не так..."
+    };
+    forms.forEach(item => {
+        postData(item);
+    })
+
+    function postData(form) {
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const statusMessage = document.createElement("div");
+            statusMessage.classList.add("status");
+            statusMessage.textContent = message.loading;
+            form.append(statusMessage);
+
+            const request = new XMLHttpRequest();
+            request.open("POST", "server.php");
+            //request.setRequestHeader("Content-type", "multipart/form-data"); // когда используем связку XMLHttpRequest() + FormData() нам не нужно устанавливать заголовок 
+            request.setRequestHeader("Content-type", "application/json"); // но если нам надо поменять формат данных и отправлят на сервер json прописываем "application/json"
+            const formData = new FormData(form);
+
+            // превращаем formData в json
+            const obj = {}; // создаем пустой объект 
+            formData.forEach((valye, key) => { // перебираем formData
+                obj[valye] = key; // и помещаем все данные из formData в obj
+            })
+
+            const json = JSON.stringify(obj) // конвертируем объект в json
+
+            request.send(json); 
+
+            request.addEventListener("load", () => {
+                if (request.status === 200) {
+                    console.log(request.response);
+                    statusMessage.textContent = message.success;
+                    form.reset(); // очистка формы после успешной отправки
+                    setTimeout(() => {
+                        statusMessage.remove(); // удаляем сообщение через 2 секунды, чтобы оно не висело всегда
+                    }, 2000)
+                } else {
+                    statusMessage.textContent = message.failure;
+                }
+            })
+        })
+    }
 });
