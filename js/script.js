@@ -256,7 +256,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
             e.preventDefault();
 
             const statusMessage = document.createElement("img"); // создаем img
-            statusMessage.src = message.loading; // добавляем картинке атрибу с ссылкой на спиннер 
+            statusMessage.src = message.loading; // добавляем картинке атрибут с ссылкой на спиннер 
             // добавляем стили для картикни, но лучше делать это через добавление класса 
             statusMessage.style.cssText = ` 
                 display: block;
@@ -266,34 +266,56 @@ window.addEventListener("DOMContentLoaded", ()=>{
             //form.append(statusMessage);
             form.insertAdjacentElement("afterend", statusMessage);
 
-            const request = new XMLHttpRequest();
-            request.open("POST", "server.php");
+            // ==== заменяем на fetch ====
+            // const request = new XMLHttpRequest();
+            // request.open("POST", "server.php"); 
             //request.setRequestHeader("Content-type", "multipart/form-data"); // когда используем связку XMLHttpRequest() + FormData() нам не нужно устанавливать заголовок 
-            request.setRequestHeader("Content-type", "application/json"); // но если нам надо поменять формат данных и отправлят на сервер json прописываем "application/json"
+            //request.setRequestHeader("Content-type", "application/json"); // но если нам надо поменять формат данных и отправлят на сервер json прописываем "application/json"
+            
+            
+
             const formData = new FormData(form);
 
             // превращаем formData в json
             const obj = {}; // создаем пустой объект 
             formData.forEach((valye, key) => { // перебираем formData
-                obj[valye] = key; // и помещаем все данные из formData в obj
+                obj[key] = valye; // и помещаем все данные из formData в obj
             })
 
-            const json = JSON.stringify(obj) // конвертируем объект в json
+            // ==== заменяем на fetch ====
+            //request.send(json); 
 
-            request.send(json); 
+            fetch("server.php", {
+                method: "POST",
+                headers:  {
+                    "Content-type": "application/json"
+                },
+                body: JSON.stringify(obj) // конвертируем объект в json
+            })
+            .then(data => data.text())
+            .then(data => { // data - то, что возвращает сервер
+                console.log(data);
+                showThanksModal(message.success);
+                statusMessage.remove(); // удаляем сообщение 
+            }).catch(() => {
+                showThanksModal(message.failure)
+            }).finally(() => {
+                form.reset(); // очистка формы в любом случае
+            });
 
-            request.addEventListener("load", () => {
-                if (request.status === 200) {
-                    console.log(request.response);
-                    showThanksModal(message.success);
-                    form.reset(); // очистка формы после успешной отправки
-                    statusMessage.remove(); // удаляем сообщение 
+            // ==== заменяем на fetch ====
+            // request.addEventListener("load", () => {
+            //     if (request.status === 200) {
+            //         console.log(request.response);
+            //         showThanksModal(message.success);
+            //         form.reset(); // очистка формы после успешной отправки
+            //         statusMessage.remove(); // удаляем сообщение 
                     
-                } else {
-                    showThanksModal(message.failure)
-                }
-            })
-        })
+            //     } else {
+            //         showThanksModal(message.failure)
+            //     }
+            // })
+        });
     }
 
     // функция для показа статуса отправки данных на сервер
@@ -321,7 +343,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
             modalContent.classList.add("show");
             modalContent.classList.remove("hide");
             closeModal();
-        }, 4000)
+        }, 4000);
     }
 
 
