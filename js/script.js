@@ -107,7 +107,6 @@ window.addEventListener("DOMContentLoaded", ()=>{
         }
     }
 
-
     setClock(".timer", deadline);
 
     // модальное окно 
@@ -188,7 +187,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
             menu.innerHTML += `
                 <div class="menu__item">
                     <img src="${this.img}" alt="${this.alt}">
-                    <h3 class="menu__item-subtitle">Меню "${this.name}"</h3>
+                    <h3 class="menu__item-subtitle">${this.name}</h3>
                     <div class="menu__item-descr">${this.text}</div>
                     <div class="menu__item-divider"></div>
                     <div class="menu__item-price">
@@ -199,22 +198,26 @@ window.addEventListener("DOMContentLoaded", ()=>{
             `
         }
     }
+
+    /* заменяем ручной ввод на запрос данных с сервера 
     const vargyText = `Меню "Фитнес" - это новый подход к приготовлению блюд: больше свежих овощей и фруктов. 
     Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной ценой и высоким качеством!`;
     const eliteText = `В меню “Премиум” мы используем не только красивый дизайн упаковки, но и качественное 
     исполнение блюд. Красная рыба, морепродукты, фрукты - ресторанное меню без похода в ресторан!`;
     const postText = `Меню “Постное” - это тщательный подбор ингредиентов: полное отсутствие продуктов
     животного происхождения, молоко из миндаля, овса, кокоса или гречки, правильное количество белков 
-    за счет тофу и импортных вегетарианских стейков.`;
+    за счет тофу и импортных вегетарианских стейков.`; */ 
 
-    // const vegy = new Card("img/tabs/vegy.jpg", "vegy", "Фитнес", vargyText, 2500);
-    // const elite = new Card("img/tabs/elite.jpg", "elite", "Премиум", eliteText, 5500);
-    // const post = new Card("img/tabs/post.jpg", "post", "Постное", postText, 4300);
+   /* === Тоже самое что и код ниже, но длинне ===
+    const vegy = new Card("img/tabs/vegy.jpg", "vegy", "Фитнес", vargyText, 2500);
+    const elite = new Card("img/tabs/elite.jpg", "elite", "Премиум", eliteText, 5500);
+    const post = new Card("img/tabs/post.jpg", "post", "Постное", postText, 4300);
 
-    // vegy.renderCard();
-    // elite.renderCard();
-    // post.renderCard();
+    vegy.renderCard();
+    elite.renderCard();
+    post.renderCard(); */
 
+    /* заменяем ручной ввод атрибутов на запрос данных с сервера 
     new Card(
         "img/tabs/vegy.jpg", 
         "vegy", 
@@ -234,7 +237,29 @@ window.addEventListener("DOMContentLoaded", ()=>{
         "post", 
         "Постное", 
         postText, 
-        30).renderCard();
+        30).renderCard(); */ 
+
+    // гибкая настройка запроса данных с сервер (не привязываемся к url)
+    const getResource = async (url) => { // async -- указывает, что внутри функции будет асинхронный  код
+        const result = await fetch(url); // await -- пара для async  -- скрипт пойдет работать дальше только после выполнения запроса с await  
+        // если fetch столкнется с ошибкой HTTP запроса (404, 500, 502...) он не выдаст catch
+        // поэтому такие ошибки мы обрабатываем вручную
+        if(!result.ok) {
+            throw new Error(`Не получается произвести fetch ${url}, status: ${res.status}`); 
+        }
+        
+        return await result.json(); // возвращаем промис в json формате
+    }
+
+    // обрахаемся к серверу и получаем данные массива меню
+    getResource("http://localhost:3000/menu")
+        .then(data => {
+            // перебираем все объекты в массиве меню
+            data.forEach(({img, altimg, title, descr, price}) => {
+                // через renderCard создаем карточки 
+                new Card(img, altimg, title, descr, price).renderCard();
+            });
+        });
 
     // отправляем данные из формы обратной связи на сервер 
     const forms = document.querySelectorAll("form");
@@ -248,15 +273,27 @@ window.addEventListener("DOMContentLoaded", ()=>{
 
     // для всех форм обратной связи вызывем функцию postData
     forms.forEach(item => {
-        postData(item);
+        bindPostData(item);
     })
 
-    function postData(form) {
+    // гибкая настройка запроса на сервер (не привязываемся к url)
+    const postData = async (url, data) => { // async -- указывает, что внутри функции будет асинхронный  код
+        const result = await fetch(url, { // await -- пара для async  -- скрипт пойдет работать дальше только после выполнения запроса с await
+            method: "POST",
+            headers:  {
+                "Content-type": "application/json"
+            },
+            body: data
+        });
+        return await result.json() // возвращаем промис в json формате
+    }
+
+    function bindPostData(form) {
         form.addEventListener("submit", (e) => {
             e.preventDefault();
 
             const statusMessage = document.createElement("img"); // создаем img
-            statusMessage.src = message.loading; // добавляем картинке атрибут с ссылкой на спиннер 
+            statusMessage.src = message.loading; // добавляем картинке атрибу с ссылкой на спиннер 
             // добавляем стили для картикни, но лучше делать это через добавление класса 
             statusMessage.style.cssText = ` 
                 display: block;
@@ -266,33 +303,35 @@ window.addEventListener("DOMContentLoaded", ()=>{
             //form.append(statusMessage);
             form.insertAdjacentElement("afterend", statusMessage);
 
-            // ==== заменяем на fetch ====
-            // const request = new XMLHttpRequest();
-            // request.open("POST", "server.php"); 
-            //request.setRequestHeader("Content-type", "multipart/form-data"); // когда используем связку XMLHttpRequest() + FormData() нам не нужно устанавливать заголовок 
-            //request.setRequestHeader("Content-type", "application/json"); // но если нам надо поменять формат данных и отправлят на сервер json прописываем "application/json"
+           /* ==== заменяем на fetch ====
+            const request = new XMLHttpRequest();
+            request.open("POST", "server.php"); 
+            request.setRequestHeader("Content-type", "multipart/form-data"); // когда используем связку XMLHttpRequest() + FormData() нам не нужно устанавливать заголовок 
+            request.setRequestHeader("Content-type", "application/json"); // но если нам надо поменять формат данных и отправлят на сервер json прописываем "application/json" */
             
-            
-
             const formData = new FormData(form);
 
-            // превращаем formData в json
+            /* превращаем formData в json -- старый метод
             const obj = {}; // создаем пустой объект 
             formData.forEach((valye, key) => { // перебираем formData
                 obj[key] = valye; // и помещаем все данные из formData в obj
-            })
+            }) */ 
 
-            // ==== заменяем на fetch ====
-            //request.send(json); 
+            // превращаем formData в json -- новый метод
+            const json = JSON.stringify(Object.fromEntries(formData.entries()))
 
+            /* === заменяем на fetch ===
+            request.send(json); */ 
+
+            /* заменяем функцией postData()
             fetch("server.php", {
                 method: "POST",
                 headers:  {
                     "Content-type": "application/json"
                 },
                 body: JSON.stringify(obj) // конвертируем объект в json
-            })
-            .then(data => data.text())
+            }) */ 
+            postData("http://localhost:3000/requests", json)
             .then(data => { // data - то, что возвращает сервер
                 console.log(data);
                 showThanksModal(message.success);
@@ -303,18 +342,18 @@ window.addEventListener("DOMContentLoaded", ()=>{
                 form.reset(); // очистка формы в любом случае
             });
 
-            // ==== заменяем на fetch ====
-            // request.addEventListener("load", () => {
-            //     if (request.status === 200) {
-            //         console.log(request.response);
-            //         showThanksModal(message.success);
-            //         form.reset(); // очистка формы после успешной отправки
-            //         statusMessage.remove(); // удаляем сообщение 
+            /* ==== заменяем на fetch ====
+            request.addEventListener("load", () => {
+                if (request.status === 200) {
+                    console.log(request.response);
+                    showThanksModal(message.success);
+                    form.reset(); // очистка формы после успешной отправки
+                    statusMessage.remove(); // удаляем сообщение 
                     
-            //     } else {
-            //         showThanksModal(message.failure)
-            //     }
-            // })
+                } else {
+                    showThanksModal(message.failure)
+                }
+            }) */ 
         });
     }
 
