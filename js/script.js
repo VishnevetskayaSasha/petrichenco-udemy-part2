@@ -393,14 +393,15 @@ window.addEventListener("DOMContentLoaded", ()=>{
     // слайдер 
 
     const slider = document.querySelector(".offer__slider-wrapper");
+    const sliderInner = slider.querySelector(".offer__slider-inner");
+    const width = window.getComputedStyle(slider).width; // ширина 1 слайда
     const sliderItem = slider.querySelectorAll(".offer__slide");
     const rowRight = document.querySelector(".offer__slider-next");
     const rowLeft = document.querySelector(".offer__slider-prev");
     const currentNumber = document.querySelector("#current");
     const totalNumber = document.querySelector("#total");
 
-    
-
+/* === простой слайдер === 
     sliderItem.forEach((item) => {
         item.classList.add("hide")
     })
@@ -437,5 +438,49 @@ window.addEventListener("DOMContentLoaded", ()=>{
             index = sliderItem.length - 1;
         }
         sliderShowImg(index);
+    }) */ 
+    
+
+    // кол-во слайдов * 100% -- получаем ширину, в которую поместятся все слайды 
+    sliderInner.style.width = 100 * sliderItem.length + "%";
+    sliderInner.style.display = "flex";
+    sliderInner.style.transition = "0.5s all";
+    // скрываем переполнение слайдера, чтобы видно было только один слайд 
+    slider.style.overflow = "hidden";
+    // устанавливаем всем слайдам одинаковую ширину 
+    sliderItem.forEach(item => item.style.width = width);
+
+    let index = 0;
+    let offset = 0; // сюда будем записывать на сколько мы передвинулись по слайдеру  
+
+    totalNumber.innerHTML = getZerro(sliderItem.length);
+    currentNumber.innerHTML = getZerro(index + 1);
+
+    rowRight.addEventListener("click", () => {
+        if (offset == Number.parseInt(width, 10) * (sliderItem.length - 1)) {
+            offset = 0;
+        } else {
+            offset += Number.parseInt(width, 10);
+        }
+        sliderInner.style.transform = `translateX(-${offset}px)`;
+        index += 1;
+        if(index > sliderItem.length - 1) {
+            index = 0;
+        }
+        currentNumber.innerHTML = getZerro(index + 1);
     })
+
+    rowLeft.addEventListener("click", () => {
+        if (offset == 0) {
+            offset = Number.parseInt(width, 10) * (sliderItem.length - 1);
+        } else {
+            offset -= Number.parseInt(width, 10);
+        }
+        sliderInner.style.transform = `translateX(-${offset}px)`
+        index -= 1;
+        if(index < 0) {
+            index = sliderItem.length - 1;
+        }
+        currentNumber.innerHTML = getZerro(index + 1);
+    }) 
 });
