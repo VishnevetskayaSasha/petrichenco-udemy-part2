@@ -390,4 +390,52 @@ window.addEventListener("DOMContentLoaded", ()=>{
         .then(data => data.json())
         .then(res => console.log(res))
       
+    // слайдер 
+
+    const slider = document.querySelector(".offer__slider-wrapper");
+    const sliderItem = slider.querySelectorAll(".offer__slide");
+    const rowRight = document.querySelector(".offer__slider-next");
+    const rowLeft = document.querySelector(".offer__slider-prev");
+    const currentNumber = document.querySelector("#current");
+    const totalNumber = document.querySelector("#total");
+
+    
+
+    sliderItem.forEach((item) => {
+        item.classList.add("hide")
+    })
+
+    let index = 0;
+    totalNumber.innerHTML = getZerro(sliderItem.length);
+
+    function sliderShowImg(index) {
+        sliderItem[index].classList.remove("hide");
+        sliderItem[index].classList.add("show");
+        currentNumber.innerHTML = getZerro(index + 1);
+    }
+
+    sliderShowImg(index);
+
+    function sliderHideImg(index) {
+        sliderItem[index].classList.remove("show");
+        sliderItem[index].classList.add("hide");
+    }
+
+    rowRight.addEventListener("click", () => {
+        sliderHideImg(index);
+        index += 1;
+        if(index > sliderItem.length - 1) {
+            index = 0;
+        }
+        sliderShowImg(index);
+    })
+
+    rowLeft.addEventListener("click", () => {
+        sliderHideImg(index);
+        index -= 1;
+        if(index < 0) {
+            index = sliderItem.length - 1;
+        }
+        sliderShowImg(index);
+    })
 });
