@@ -392,14 +392,15 @@ window.addEventListener("DOMContentLoaded", ()=>{
       
     // слайдер 
 
-    const slider = document.querySelector(".offer__slider-wrapper");
+    const sliderContent = document.querySelector(".offer__slider");
+    const slider = sliderContent.querySelector(".offer__slider-wrapper");
     const sliderInner = slider.querySelector(".offer__slider-inner");
     const width = window.getComputedStyle(slider).width; // ширина 1 слайда
     const sliderItem = slider.querySelectorAll(".offer__slide");
-    const rowRight = document.querySelector(".offer__slider-next");
-    const rowLeft = document.querySelector(".offer__slider-prev");
-    const currentNumber = document.querySelector("#current");
-    const totalNumber = document.querySelector("#total");
+    const rowRight = sliderContent.querySelector(".offer__slider-next");
+    const rowLeft = sliderContent.querySelector(".offer__slider-prev");
+    const currentNumber = sliderContent.querySelector("#current");
+    const totalNumber = sliderContent.querySelector("#total");
 
 /* === простой слайдер === 
     sliderItem.forEach((item) => {
@@ -450,6 +451,55 @@ window.addEventListener("DOMContentLoaded", ()=>{
     // устанавливаем всем слайдам одинаковую ширину 
     sliderItem.forEach(item => item.style.width = width);
 
+    sliderContent.style.position = "relative";
+
+    // создаем блок с точками-индикаторами
+    const indicator = document.createElement("ol");
+    const dots = [];
+
+    indicator.style.cssText = `
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 15;
+        display: flex;
+        justify-content: center;
+        margin-right: 15%;
+        margin-left: 15%;
+        list-style: none;
+    `;
+
+    sliderContent.append(indicator);
+
+    for (let i = 0; i < sliderItem.length; i++) {
+        const dot = document.createElement("li");
+        // добавляем атрибут по которому мэтчится карточки и точки
+        dot.setAttribute("data-slide-to", i);
+        dot.style.cssText = `
+            box-sizing: content-box;
+            flex: 0 1 auto;
+            width: 30px;
+            height: 6px;
+            margin-right: 3px;
+            margin-left: 3px;
+            cursor: pointer;
+            background-color: #fff;
+            background-clip: padding-box;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            opacity: .5;
+            transition: opacity .6s ease;
+        `;
+
+        if( i == 0) {
+            dot.style.opacity = 1; 
+        }
+
+        indicator.append(dot);
+        dots.push(dot);
+    }
+
     let index = 0;
     let offset = 0; // сюда будем записывать на сколько мы передвинулись по слайдеру  
 
@@ -463,12 +513,17 @@ window.addEventListener("DOMContentLoaded", ()=>{
             offset += Number.parseInt(width, 10);
         }
         sliderInner.style.transform = `translateX(-${offset}px)`;
-        index += 1;
-        if(index > sliderItem.length - 1) {
+        
+        if(index == sliderItem.length - 1) {
             index = 0;
+        } else {
+            index += 1;
         }
+
         currentNumber.innerHTML = getZerro(index + 1);
-    })
+        dots.forEach(dot => dot.style.opacity = ".5");
+        dots[index].style.opacity = 1;
+    });
 
     rowLeft.addEventListener("click", () => {
         if (offset == 0) {
@@ -477,10 +532,31 @@ window.addEventListener("DOMContentLoaded", ()=>{
             offset -= Number.parseInt(width, 10);
         }
         sliderInner.style.transform = `translateX(-${offset}px)`
-        index -= 1;
-        if(index < 0) {
+
+        if(index <= 0) {
             index = sliderItem.length - 1;
+        } else {
+            index -= 1;
         }
+
         currentNumber.innerHTML = getZerro(index + 1);
-    }) 
+        dots.forEach(dot => dot.style.opacity = ".5");
+        dots[index].style.opacity = 1;
+    });
+
+    dots.forEach(item => {
+        item.addEventListener("click", (e) => {
+            const slideTo = +e.target.getAttribute("data-slide-to");
+            index = slideTo;
+            offset = Number.parseInt(width, 10) * (slideTo);
+
+            sliderInner.style.transform = `translateX(-${offset}px)`;
+
+            currentNumber.innerHTML = getZerro(index + 1);
+
+            dots.forEach(dot => dot.style.opacity = ".5");
+            dots[index].style.opacity = 1;
+
+        });
+    });
 });
